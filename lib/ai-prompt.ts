@@ -1,4 +1,5 @@
-import type { getAIBusinessContext } from "@/lib/ai-business-context";
+﻿import type { getAIBusinessContext } from "@/lib/ai-business-context";
+import { buildBusinessInsights } from "@/lib/ai/business-insights";
 
 type AIBusinessContext = NonNullable<
   Awaited<ReturnType<typeof getAIBusinessContext>>
@@ -14,6 +15,8 @@ export function buildAIBusinessPrompt(
   userMessage: string,
   conversationHistory: ConversationMessage[] = []
 ) {
+  const insights = buildBusinessInsights(context);
+
   const historyText =
     conversationHistory.length > 0
       ? conversationHistory
@@ -55,6 +58,20 @@ Cashflow Income: ${context.summary.total_cashflow_income}
 Cashflow Expenses: ${context.summary.total_cashflow_expenses}
 Cashflow Net: ${context.summary.total_cashflow_net}
 
+BUSINESS INSIGHTS
+${
+  insights.length > 0
+    ? insights
+        .map(
+          (insight) =>
+            `- [${insight.priority.toUpperCase()}] ${insight.title}: ${insight.description}`
+        )
+        .join("\n")
+    : "No notable business insights are currently detected."
+}
+
+
+
 INVENTORY
 Low-stock Products: ${context.summary.low_stock_product_count}
 
@@ -87,3 +104,7 @@ ASSISTANT RULES
 - If the user asks for a recommendation or business action, base it only on the supplied business data and clearly distinguish factual observations from suggested actions.
 `.trim();
 }
+
+
+
+
