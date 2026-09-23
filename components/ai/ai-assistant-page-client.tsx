@@ -163,7 +163,11 @@ export default function AIAssistantPageClient() {
         throw new Error(data.error || "Failed to send message.");
       }
 
-      setMessages((current) => [...current, data.message]);
+      setMessages((current) => [
+  ...current,
+  data.message,
+  ...(data.assistantMessage ? [data.assistantMessage] : []),
+]);
       setMessageInput("");
 
       setConversations((current) =>
