@@ -55,11 +55,11 @@ export default function CustomerSearch({
       {filteredCustomers.length > 0 ? (
         <div className="divide-y divide-slate-100">
           {filteredCustomers.map((customer) => (
-            <Link
-              key={customer.id}
-              href={`/dashboard/customers/${customer.id}`}
-              className="flex flex-col gap-3 p-5 transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
-            >
+  <div
+    key={customer.id}
+    className="flex flex-col gap-3 p-5 transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
+  >
+            
               <div>
                 <h2 className="font-semibold text-slate-950">
                   {customer.name}
@@ -78,11 +78,29 @@ export default function CustomerSearch({
                 </div>
 
                 <div className="mt-1 font-semibold text-slate-950">
-                  {currency}
+                                    {currency}
                   {Number(customer.balance || 0).toLocaleString()}
                 </div>
+                <div className="mt-3 flex gap-2">
+
+  <Link
+    href={`/dashboard/customers/${customer.id}`}
+    className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+  >
+    View
+  </Link>
+
+
+  <Link
+    href={`/dashboard/customers/statement?customer_id=${customer.id}`}
+    className="rounded-lg bg-slate-950 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+  >
+    Statement
+  </Link>
+
+</div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       ) : (

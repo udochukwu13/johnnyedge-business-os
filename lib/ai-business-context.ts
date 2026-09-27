@@ -12,14 +12,15 @@ export async function getAIBusinessContext() {
   const businessId = activeBusiness.business.id;
 
   const [
-    customersResult,
-    productsResult,
-    salesResult,
-    ordersResult,
-    invoicesResult,
-    expensesResult,
-    cashflowResult,
-  ] = await Promise.all([
+  customersResult,
+  productsResult,
+  salesResult,
+  saleItemsResult,
+  ordersResult,
+  invoicesResult,
+  expensesResult,
+  cashflowResult,
+] = await Promise.all([
     supabase
       .from("customers")
       .select("id, name, balance")
@@ -32,70 +33,75 @@ export async function getAIBusinessContext() {
       )
       .eq("business_id", businessId),
 
-    supabase
-      .from("sales")
-      .select(
-        "id, sale_number, status, subtotal, discount, tax, total, amount_paid, balance_due, sold_at"
-      )
-      .eq("business_id", businessId)
-      .order("sold_at", { ascending: false })
-      .limit(100),
+    
+      supabase
+  .from("sales")
+  .select(
+    "id, sale_number, status, subtotal, discount, tax, total, amount_paid, balance_due, sold_at"
+  )
+  .eq("business_id", businessId)
+  .order("sold_at", { ascending: false }),
+
+      supabase
+  .from("sale_items")
+  .select("id, sale_id, product_id, quantity, unit_price, unit_cost, discount, line_total, created_at")
+  .eq("business_id", businessId)
+  .order("created_at", { ascending: false }),
 
     supabase
-      .from("orders")
-      .select(
-        "id, order_number, status, subtotal, discount, tax, total, ordered_at"
-      )
-      .eq("business_id", businessId)
-      .order("ordered_at", { ascending: false })
-      .limit(100),
+  .from("orders")
+  .select(
+    "id, order_number, status, subtotal, discount, tax, total, ordered_at"
+  )
+  .eq("business_id", businessId)
+  .order("ordered_at", { ascending: false }),
 
     supabase
-      .from("invoices")
-      .select(
-        "id, invoice_number, status, subtotal, discount, tax, total, amount_paid, balance_due, issue_date, due_date"
-      )
-      .eq("business_id", businessId)
-      .order("issue_date", { ascending: false })
-      .limit(100),
+  .from("invoices")
+  .select(
+    "id, invoice_number, status, subtotal, discount, tax, total, amount_paid, balance_due, issue_date, due_date"
+  )
+  .eq("business_id", businessId)
+  .order("issue_date", { ascending: false }),
+    
+  supabase
+  .from("expenses")
+  .select(
+    "id, category, description, amount, payment_method, expense_date"
+  )
+  .eq("business_id", businessId)
+  .order("expense_date", { ascending: false }),
 
     supabase
-      .from("expenses")
-      .select(
-        "id, category, description, amount, payment_method, expense_date"
-      )
-      .eq("business_id", businessId)
-      .order("expense_date", { ascending: false })
-      .limit(100),
-
-    supabase
-      .from("cashflow_entries")
-      .select(
-        "id, type, category, description, amount, payment_method, entry_date, reference"
-      )
-      .eq("business_id", businessId)
-      .order("entry_date", { ascending: false })
-      .limit(100),
+  .from("cashflow_entries")
+  .select(
+    "id, type, category, description, amount, payment_method, entry_date, reference"
+  )
+  .eq("business_id", businessId)
+  .order("entry_date", { ascending: false }),
   ]);
 
   const errors = [
-    customersResult.error,
-    productsResult.error,
-    salesResult.error,
-    ordersResult.error,
+  customersResult.error,
+  productsResult.error,
+  salesResult.error,
+  saleItemsResult.error,
+  ordersResult.error,
     invoicesResult.error,
     expensesResult.error,
     cashflowResult.error,
   ].filter(Boolean);
 
   if (errors.length > 0) {
-    throw new Error("Unable to load complete business context.");
-  }
+  console.error("AI business context errors:", errors);
+  throw new Error("Unable to load complete business context.");
+}
 
   const customers = customersResult.data ?? [];
-  const products = productsResult.data ?? [];
-  const sales = salesResult.data ?? [];
-  const orders = ordersResult.data ?? [];
+const products = productsResult.data ?? [];
+const sales = salesResult.data ?? [];
+const saleItems = saleItemsResult.data ?? [];
+const orders = ordersResult.data ?? [];
   const invoices = invoicesResult.data ?? [];
   const expenses = expensesResult.data ?? [];
   const cashflow = cashflowResult.data ?? [];
@@ -119,6 +125,75 @@ export async function getAIBusinessContext() {
       Number(product.low_stock_threshold || 0)
   );
 
+  const productSalesSummary = products.map((product) => {
+  const matchingSaleItems = saleItems.filter(
+    (item) => item.product_id === product.id
+  );
+
+  const unitsSold = matchingSaleItems.reduce(
+    (sum, item) => sum + Number(item.quantity || 0),
+    0
+  );
+
+  const salesValue = matchingSaleItems.reduce(
+    (sum, item) => sum + Number(item.line_total || 0),
+    0
+  );
+
+  return {
+    product_id: product.id,
+    product_name: product.name,
+    sku: product.sku,
+    units_sold: unitsSold,
+    sales_value: salesValue,
+  };
+});
+
+const productProfitabilitySummary = products.map((product) => {
+  const matchingSaleItems = saleItems.filter(
+    (item) => item.product_id === product.id
+  );
+
+  const unitsSold = matchingSaleItems.reduce(
+    (sum, item) => sum + Number(item.quantity || 0),
+    0
+  );
+
+  const salesValue = matchingSaleItems.reduce(
+    (sum, item) => sum + Number(item.line_total || 0),
+    0
+  );
+
+  const estimatedCostOfGoodsSold = matchingSaleItems.reduce(
+  (sum, item) =>
+    sum + Number(item.quantity || 0) * Number(item.unit_cost || 0),
+  0
+);
+
+const grossProfit = salesValue - estimatedCostOfGoodsSold;
+
+  const grossMarginPercentage =
+    salesValue > 0 ? (grossProfit / salesValue) * 100 : 0;
+
+  const potentialGrossProfit =
+    Number(product.stock_quantity || 0) *
+    (Number(product.price || 0) - Number(product.cost_price || 0));
+
+  return {
+    product_id: product.id,
+    product_name: product.name,
+    sku: product.sku,
+    units_sold: unitsSold,
+    sales_value: salesValue,
+    estimated_cost_of_goods_sold: estimatedCostOfGoodsSold,
+    gross_profit: grossProfit,
+    gross_margin_percentage: grossMarginPercentage,
+    current_stock: Number(product.stock_quantity || 0),
+    selling_price: Number(product.price || 0),
+    cost_price: Number(product.cost_price || 0),
+    potential_gross_profit: potentialGrossProfit,
+  };
+});
   const totalSales = sales.reduce(
     (sum, sale) => sum + Number(sale.total || 0),
     0
@@ -177,12 +252,15 @@ export async function getAIBusinessContext() {
     },
 
     customers,
-    products,
-    low_stock_products: lowStockProducts,
-    sales,
-    orders,
-    invoices,
-    expenses,
-    cashflow,
+products,
+low_stock_products: lowStockProducts,
+product_sales_summary: productSalesSummary,
+product_profitability_summary: productProfitabilitySummary,
+sales,
+sale_items: saleItems,
+orders,
+invoices,
+expenses,
+cashflow,
   };
 }

@@ -22,3 +22,35 @@ button, input, select, textarea { font: inherit; }
   background: #111827;
   color: white;
 }
+@media print {
+  body {
+    background: white;
+  }
+
+  button {
+    display: none !important;
+  }
+
+  nav,
+  aside {
+    display: none !important;
+  }
+
+  .shadow-sm,
+  .shadow {
+    box-shadow: none !important;
+  }
+
+  .border {
+    border-color: #ddd !important;
+  }
+
+  .rounded-2xl,
+  .rounded-xl {
+    border-radius: 0 !important;
+  }
+
+  @page {
+    margin: 20mm;
+  }
+}

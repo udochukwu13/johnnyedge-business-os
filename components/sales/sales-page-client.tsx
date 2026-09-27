@@ -13,6 +13,7 @@ type Product = {
   name: string;
   sku: string | null;
   price: number;
+  cost_price: number;
   stock_quantity: number;
 };
 

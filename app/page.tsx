@@ -10,6 +10,7 @@ import {
   Users,
   Zap
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 const features = [
   { icon: Bot, title: "AI Business Assistant", text: "Ask questions about sales, customers, inventory and business performance." },

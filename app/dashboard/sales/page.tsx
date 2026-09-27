@@ -25,7 +25,9 @@ export default async function SalesPage() {
 
     supabase
       .from("products")
-      .select("id, name, sku, price, stock_quantity")
+      .select(
+  "id, name, sku, price, cost_price, stock_quantity"
+)
       .eq("business_id", businessId)
       .order("name", { ascending: true }),
 
@@ -78,6 +80,7 @@ export default async function SalesPage() {
     name: product.name,
     sku: product.sku,
     price: Number(product.price || 0),
+    cost_price: Number(product.cost_price || 0),
     stock_quantity: Number(product.stock_quantity || 0),
   }));
 

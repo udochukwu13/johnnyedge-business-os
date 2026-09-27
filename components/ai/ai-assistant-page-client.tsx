@@ -323,7 +323,18 @@ export default function AIAssistantPageClient() {
                   </div>
                 </div>
               ))}
-
+              {sending && (
+  <div className="flex justify-start">
+    <div className="rounded-2xl bg-slate-100 px-4 py-3 text-sm text-slate-600">
+      AI is thinking
+      <span className="ml-1 inline-flex">
+        <span className="animate-bounce">.</span>
+        <span className="animate-bounce [animation-delay:150ms]">.</span>
+        <span className="animate-bounce [animation-delay:300ms]">.</span>
+      </span>
+    </div>
+  </div>
+)}
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-500">
                 Your message has been saved and the AI assistant is connected to your live business data.
               </div>

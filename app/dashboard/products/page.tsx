@@ -3,6 +3,7 @@ import { getActiveBusiness } from "@/lib/business";
 import { Package } from "lucide-react";
 import AddProductButton from "@/components/products/add-product-button";
 import ProductSearch from "@/components/products/product-search";
+import ProductSummary from "@/components/products/product-summary";
 
 export default async function ProductsPage() {
   const activeBusiness = await getActiveBusiness();
@@ -49,7 +50,30 @@ export default async function ProductsPage() {
     stock_quantity: Number(product.stock_quantity || 0),
     low_stock_threshold: Number(product.low_stock_threshold || 0),
   }));
+const totalProducts = formattedProducts.length;
 
+const inventoryCost = formattedProducts.reduce(
+  (sum, product) =>
+    sum + product.stock_quantity * product.cost_price,
+  0
+);
+
+const totalUnitsInStock = formattedProducts.reduce(
+  (sum, product) =>
+    sum + product.stock_quantity,
+  0
+);
+
+const potentialSalesValue = formattedProducts.reduce(
+  (sum, product) =>
+    sum + product.stock_quantity * product.price,
+  0
+);
+
+const lowStockProducts = formattedProducts.filter(
+  (product) =>
+    product.stock_quantity <= product.low_stock_threshold
+).length;
   return (
     <div className="mx-auto max-w-7xl">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -73,7 +97,14 @@ export default async function ProductsPage() {
           currency={currency}
         />
       </div>
-
+<ProductSummary
+  currency={currency}
+  totalProducts={totalProducts}
+  inventoryCost={inventoryCost}
+  totalUnitsInStock={totalUnitsInStock}
+  potentialSalesValue={potentialSalesValue}
+  lowStockProducts={lowStockProducts}
+/>
       <div className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 p-4">
           <div className="text-sm font-medium text-slate-500">

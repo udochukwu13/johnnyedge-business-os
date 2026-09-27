@@ -89,98 +89,154 @@ export default function ProductSearch({
       </div>
 
       {filteredProducts.length > 0 ? (
-        <div className="divide-y divide-slate-100">
-          {filteredProducts.map((product) => {
-            const stockStatus = getStockStatus(product);
+  <div className="divide-y divide-slate-100">
+    {filteredProducts.map((product) => {
+      const stockStatus = getStockStatus(product);
 
-            return (
-              <div
-                key={product.id}
-                className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <h2 className="font-semibold text-slate-950">
-                    {product.name}
-                  </h2>
+      const unitProfit =
+        product.price - product.cost_price;
 
-                  <div className="mt-1 text-sm text-slate-500">
-                    {product.sku || "No SKU"}
-                  </div>
+      const inventoryValue =
+        product.stock_quantity * product.cost_price;
 
-                  <div className="mt-3">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${stockStatus.className}`}
-                    >
-                      {stockStatus.label}
-                    </span>
-                  </div>
-                </div>
+      const potentialRevenue =
+        product.stock_quantity * product.price;
+const profitMargin =
+  product.price > 0
+    ? ((unitProfit / product.price) * 100)
+    : 0;
+      return (
+        <div
+          key={product.id}
+          className="flex flex-col gap-2 p-4"
+        >
 
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="grid grid-cols-2 gap-6 text-sm sm:grid-cols-3">
-                    <div>
-                      <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                        Price
-                      </div>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="font-semibold text-slate-950">
+                {product.name}
+              </h2>
 
-                      <div className="mt-1 font-semibold text-slate-950">
-                        {currency}
-                        {Number(product.price || 0).toLocaleString()}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                        Cost
-                      </div>
-
-                      <div className="mt-1 font-semibold text-slate-950">
-                        {currency}
-                        {Number(product.cost_price || 0).toLocaleString()}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                        Stock
-                      </div>
-
-                      <div className="mt-1 font-semibold text-slate-950">
-                        {Number(product.stock_quantity || 0).toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <EditProductButton
-                      businessId={businessId}
-                      currency={currency}
-                      product={product}
-                    />
-
-                    <DeleteProductButton
-                      productId={product.id}
-                      productName={product.name}
-                    />
-                  </div>
-                </div>
+              <div className="mt-0.5 text-sm text-slate-500">
+                {product.sku || "No SKU"}
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="px-6 py-16 text-center">
-          <Search className="mx-auto h-10 w-10 text-slate-300" />
+            </div>
 
-          <h2 className="mt-4 text-lg font-semibold text-slate-950">
-            No matching products
-          </h2>
+            <span
+              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${stockStatus.className}`}
+            >
+              {stockStatus.label}
+            </span>
+          </div>
 
-          <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-            Try a different product name, SKU, or description.
-          </p>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+
+            <div>
+              <div className="text-xs uppercase text-slate-400">
+                Price
+              </div>
+              <div className="mt-1 font-semibold">
+                {currency}{product.price.toLocaleString()}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs uppercase text-slate-400">
+                Cost
+              </div>
+              <div className="mt-1 font-semibold">
+                {currency}{product.cost_price.toLocaleString()}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs uppercase text-slate-400">
+                Profit
+              </div>
+              <div className="mt-1 font-semibold text-emerald-700">
+                {currency}{unitProfit.toLocaleString()}
+              </div>
+            </div>
+<div>
+  <div className="text-xs uppercase text-slate-400">
+    Margin
+  </div>
+
+  <div className="mt-1 font-semibold text-emerald-700">
+    {profitMargin.toFixed(1)}%
+  </div>
+</div>
+            <div>
+              <div className="text-xs uppercase text-slate-400">
+                Stock
+              </div>
+              <div className="mt-1 font-semibold">
+                {product.stock_quantity.toLocaleString()}
+              </div>
+            </div>
+
+          </div>
+
+
+          <div className="grid gap-3 sm:grid-cols-2">
+
+            <div className="rounded-lg bg-slate-50 px-3 py-2">
+              <div className="text-xs uppercase text-slate-400">
+                Inventory Value
+              </div>
+
+              <div className="mt-1 font-semibold">
+                {currency}{inventoryValue.toLocaleString()}
+              </div>
+            </div>
+
+
+            <div className="rounded-lg bg-slate-50 px-3 py-2">
+              <div className="text-xs uppercase text-slate-400">
+                Potential Revenue
+              </div>
+
+              <div className="mt-1 font-semibold">
+                {currency}{potentialRevenue.toLocaleString()}
+              </div>
+            </div>
+
+          </div>
+
+
+          <div className="flex items-center gap-2 pt-2">
+
+            <EditProductButton
+              businessId={businessId}
+              currency={currency}
+              product={product}
+            />
+
+            <DeleteProductButton
+              productId={product.id}
+              productName={product.name}
+            />
+
+          </div>
+
         </div>
-      )}
+      );
+    })}
+  </div>
+) : (
+  <div className="px-6 py-16 text-center">
+    <Search className="mx-auto h-10 w-10 text-slate-300" />
+
+    <h2 className="mt-4 text-lg font-semibold text-slate-950">
+      No matching products
+    </h2>
+
+    <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+      Try a different product name, SKU, or description.
+    </p>
+  </div>
+)}
     </>
   );
 }

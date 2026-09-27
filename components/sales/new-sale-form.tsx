@@ -13,6 +13,7 @@ type Product = {
   name: string;
   sku: string | null;
   price: number;
+  cost_price: number;
   stock_quantity: number;
 };
 
@@ -20,6 +21,7 @@ type SaleLine = {
   product_id: string;
   quantity: number;
   unit_price: number;
+  unit_cost: number;
   discount: number;
 };
 
@@ -100,11 +102,12 @@ export default function NewSaleForm({
       setLines([
         ...lines,
         {
-          product_id: selectedProduct.id,
-          quantity: parsedQuantity,
-          unit_price: Number(selectedProduct.price),
-          discount: 0,
-        },
+  product_id: selectedProduct.id,
+  quantity: parsedQuantity,
+  unit_price: Number(selectedProduct.price),
+  unit_cost: Number(selectedProduct.cost_price),
+  discount: 0,
+}
       ]);
     }
 
@@ -165,6 +168,16 @@ export default function NewSaleForm({
       ),
     [lines]
   );
+const totalCOGS = useMemo(
+  () =>
+    lines.reduce(
+      (sum, line) =>
+        sum + line.quantity * line.unit_cost,
+      0
+    ),
+  [lines]
+);
+
 
   const discountAmount = Number(saleDiscount) || 0;
   const taxAmount = Number(tax) || 0;
@@ -174,7 +187,7 @@ export default function NewSaleForm({
     0,
     subtotal - discountAmount + taxAmount
   );
-
+const grossProfit = total - totalCOGS;
   const balanceDue = Math.max(0, total - paidAmount);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -588,7 +601,30 @@ export default function NewSaleForm({
               })}
             </span>
           </div>
+<div className="flex items-center justify-between py-2 text-sm text-slate-300">
+  <span>COGS</span>
 
+  <span>
+    {currency}{" "}
+    {totalCOGS.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}
+  </span>
+</div>
+
+
+<div className="flex items-center justify-between py-2 text-sm text-emerald-300">
+  <span>Gross Profit</span>
+
+  <span>
+    {currency}{" "}
+    {grossProfit.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}
+  </span>
+</div>
           <div className="my-2 border-t border-slate-700" />
 
           <div className="flex items-center justify-between py-2">

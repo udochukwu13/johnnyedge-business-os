@@ -1,110 +1,118 @@
-﻿import type { getAIBusinessContext } from "@/lib/ai-business-context";
-import { buildBusinessInsights } from "@/lib/ai/business-insights";
+﻿export function buildDashboardAIInsightPrompt(data: any) {
+  // Safe helper function for formatting numbers
+  const fmt = (val: any) => (typeof val === "number" ? val.toLocaleString() : "0");
+  const currency = data?.currency || "NGN";
 
-type AIBusinessContext = NonNullable<
-  Awaited<ReturnType<typeof getAIBusinessContext>>
->;
-
-type ConversationMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
-
-export function buildAIBusinessPrompt(
-  context: AIBusinessContext,
-  userMessage: string,
-  conversationHistory: ConversationMessage[] = []
-) {
-  const insights = buildBusinessInsights(context);
-
-  const historyText =
-    conversationHistory.length > 0
-      ? conversationHistory
+  const topProductsText =
+    data?.topProducts && data.topProducts.length > 0
+      ? data.topProducts
           .map(
-            (message) =>
-              `${message.role === "user" ? "USER" : "ASSISTANT"}: ${message.content}`
+            (p: any) =>
+              `- ${p.name || "Unknown Product"}: ${currency}${fmt(p.sales ?? p.totalSales)} sales, ${currency}${fmt(p.profit ?? p.grossProfit)} gross profit (${fmt(p.units ?? p.unitsSold)} units sold)`
           )
           .join("\n")
-      : "No previous conversation messages.";
+      : "No top products data available.";
+
+  const inventoryProductsText =
+    data?.inventoryProducts && data.inventoryProducts.length > 0
+      ? data.inventoryProducts
+          .map((p: any) => {
+            const name = p.name || p.product_name || p.title || p.item_name || "Uncategorized Item";
+            
+            const units =
+              p.units ??
+              p.unitsInStock ??
+              p.units_in_stock ??
+              p.quantity ??
+              p.stock_quantity ??
+              p.stock_qty ??
+              p.quantity_on_hand ??
+              p.stock ??
+              p.qty ??
+              0;
+            
+            const unitCost = p.unit_cost ?? p.unitCost ?? p.cost_price ?? p.costPrice ?? 0;
+            const cost = p.cost ?? p.total_cost ?? p.inventory_cost ?? (unitCost * units);
+            
+            const potentialProfit =
+              p.potentialProfit ??
+              p.potential_profit ??
+              p.potential_gross_profit ??
+              p.projected_profit ??
+              p.expected_profit ??
+              p.profit ??
+              0;
+
+            return `- ${name}: ${currency}${fmt(cost)} cost, ${fmt(units)} units, ${currency}${fmt(potentialProfit)} potential gross profit`;
+          })
+          .join("\n")
+      : "No inventory product data available.";
+
+  const alertsText =
+    data?.alerts && data.alerts.length > 0
+      ? data.alerts.map((a: any) => `- [${(a.type || "INFO").toUpperCase()}] ${a.message}`).join("\n")
+      : "No active business alerts.";
+
+  const grossProfit = data?.grossProfit ?? 0;
+  const grossMargin = typeof data?.grossMargin === "number" ? data.grossMargin.toFixed(1) : "0.0";
+  const totalReceivables = data?.totalReceivables ?? 0;
+  const inventoryValue = data?.inventoryValue ?? 0;
+  const inventoryPotentialProfit = data?.inventoryPotentialProfit ?? 0;
+  const totalSales = data?.totalSales ?? 0;
+  const totalCOGS = data?.totalCOGS ?? 0;
+  const totalExpenses = data?.totalExpenses ?? 0;
+  const provisionalProfit = data?.provisionalProfit ?? 0;
+  const totalCashReceived = data?.totalCashReceived ?? 0;
+  const salesOutstanding = data?.salesOutstanding ?? 0;
+  const invoiceOutstanding = data?.invoiceOutstanding ?? 0;
+  const totalUnitsInStock = data?.totalUnitsInStock ?? 0;
+  const lowStockProducts = data?.lowStockProducts ?? 0;
 
   return `
-You are the AI Business Assistant for ${context.business.name}.
+You are an expert executive CFO and management intelligence assistant for ${data?.businessName || "Johnny Edge Limited"}.
 
-Your job is to help the business owner understand and manage the business using the supplied business data.
+Prepare a clear, structured Executive Briefing using ONLY the verified figures supplied below.
 
-BUSINESS INFORMATION
-Business: ${context.business.name}
-Industry: ${context.business.industry}
-Country: ${context.business.country}
-Currency: ${context.business.currency}
+CRITICAL INSTRUCTIONS FOR FORMATTING:
+1. Start directly with an "Executive Status Matrix" using a Markdown table.
+2. Follow the matrix with concise sections for key performance facts and management action items.
+3. Keep the tone professional, direct, and actionable for decision-makers.
 
-BUSINESS SUMMARY
-Customers: ${context.summary.customer_count}
-Products: ${context.summary.product_count}
-Sales: ${context.summary.sales_count}
-Orders: ${context.summary.order_count}
-Invoices: ${context.summary.invoice_count}
-Expenses: ${context.summary.expense_count}
-Cashflow Entries: ${context.summary.cashflow_entry_count}
+Required Structure:
 
-FINANCIAL SUMMARY
-Customer Balance Total: ${context.summary.total_customer_balance}
-Inventory Value at Cost: ${context.summary.inventory_value_at_cost}
-Total Sales: ${context.summary.total_sales}
-Sales Outstanding: ${context.summary.total_sales_outstanding}
-Invoice Outstanding: ${context.summary.total_invoice_outstanding}
-Total Expenses: ${context.summary.total_expenses}
-Cashflow Income: ${context.summary.total_cashflow_income}
-Cashflow Expenses: ${context.summary.total_cashflow_expenses}
-Cashflow Net: ${context.summary.total_cashflow_net}
+## Executive Status Matrix
+| Focus Area | Status | Key Metric | Strategic Assessment |
+| :--- | :--- | :--- | :--- |
+| **Gross Profit** | 🟢 Positive | ${currency}${fmt(grossProfit)} | ${grossMargin}% gross margin |
+| **Receivables** | 🟡 Attention | ${currency}${fmt(totalReceivables)} | Sales + invoice balances |
+| **Inventory Capital** | 🟠 High Concentration | ${currency}${fmt(inventoryValue)} | Total stock at cost |
+| **Potential Gross Profit** | 🔵 Opportunity | ${currency}${fmt(inventoryPotentialProfit)} | Embedded in current stock |
 
-BUSINESS INSIGHTS
-${
-  insights.length > 0
-    ? insights
-        .map(
-          (insight) =>
-            `- [${insight.priority.toUpperCase()}] ${insight.title}: ${insight.description}`
-        )
-        .join("\n")
-    : "No notable business insights are currently detected."
-}
+## Financial & Cash Breakdown
+- **Sales & Margins:** Total sales of ${currency}${fmt(totalSales)} with COGS of ${currency}${fmt(totalCOGS)} yielding ${currency}${fmt(grossProfit)} gross profit (${grossMargin}%).
+- **Profitability:** Operating expenses at ${currency}${fmt(totalExpenses)}, leaving a provisional profit of ${currency}${fmt(provisionalProfit)} (this is provisional and not net profit).
+- **Cash Position:** ${currency}${fmt(totalCashReceived)} cash collected vs. ${currency}${fmt(totalReceivables)} in total receivables (${currency}${fmt(salesOutstanding)} sales outstanding + ${currency}${fmt(invoiceOutstanding)} invoices). Do NOT treat receivables as cash received.
 
+## Inventory & Product Exposure
+- **Inventory Position:** Total inventory value of ${currency}${fmt(inventoryValue)} across ${fmt(totalUnitsInStock)} units (${lowStockProducts} low-stock items).
+- **Potential Revenue:** Inventory sales value is ${currency}${fmt(data?.inventorySalesValue)} with potential future gross profit of ${currency}${fmt(inventoryPotentialProfit)}.
+- **Product Details:**
+${inventoryProductsText}
 
+## Management Action Items
+- **Collections:** Follow up on receivables to improve cash availability.
+- **Inventory Concentration:** Monitor product concentration in inventory to manage demand risk.
+- **Expense Control:** Maintain current margin relative to operating expenses.
 
-INVENTORY
-Low-stock Products: ${context.summary.low_stock_product_count}
+VERIFIED DATA CONTEXT:
+Business: ${data?.businessName || "Johnny Edge Limited"}
+Top Products Data:
+${topProductsText}
 
-PREVIOUS CONVERSATION
-${historyText}
-
-CURRENT USER QUESTION
-${userMessage}
-
-ASSISTANT RULES
-- Answer using the supplied business data and conversation history.
-- Use previous conversation messages to understand follow-up questions and references.
-- Do not invent business figures, records, customers, products, sales, invoices, orders, expenses, or other business information.
-- Keep customer balances, sales outstanding, and invoice outstanding as separate metrics.
-- Treat total sales as recorded sales value, not automatically as cash received.
-- Treat cashflow income as recorded cashflow income, not automatically as total sales or total payments received.
-- Treat invoice outstanding as unpaid invoice balances and do not automatically combine it with sales outstanding.
-- Treat customer balance as the balance stored against customers and do not assume it equals invoice outstanding or sales outstanding.
-- Treat inventory value at cost as the estimated cost value of current stock, not as revenue or profit.
-- Treat total expenses and cashflow expenses as separate metrics unless the supplied data explicitly establishes that they represent the same records.
-- Do not calculate profit, cash position, or profitability unless the supplied data is sufficient for that calculation.
-- When calculating a figure, show the relevant components or reasoning when useful.
-- Use ${context.business.currency} when presenting monetary values.
-- Format monetary values clearly and consistently.
-- If the available business data does not answer the question, clearly say that the available data is insufficient.
-- Give practical business explanations when appropriate.
-- Do not claim that an action was performed unless the system actually performed it.
-- When referring to previous messages, preserve the meaning of the conversation without inventing missing details.
-- If the user asks for a comparison, clearly identify the metrics being compared and do not mix different types of financial records.
-- If the user asks for a recommendation or business action, base it only on the supplied business data and clearly distinguish factual observations from suggested actions.
+Alerts Data:
+${alertsText}
 `.trim();
 }
 
-
-
-
+// Backwards compatibility alias for components referencing buildAIBusinessPrompt
+export const buildAIBusinessPrompt = buildDashboardAIInsightPrompt;

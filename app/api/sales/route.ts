@@ -135,7 +135,7 @@ export async function POST(request: Request) {
 
   const { data: products, error: productsError } = await supabase
     .from("products")
-    .select("id, name, sku, price, stock_quantity")
+    .select("id, name, sku, price, cost_price, stock_quantity")
     .eq("business_id", businessId)
     .in("id", productIds);
 
@@ -186,6 +186,7 @@ export async function POST(request: Request) {
       item.unit_price === undefined
         ? Number(product?.price ?? 0)
         : Number(item.unit_price);
+        const unitCost = Number(product?.cost_price ?? 0);
     const discount = Number(item.discount ?? 0);
 
     if (!Number.isFinite(quantity) || quantity <= 0) {
@@ -212,13 +213,14 @@ export async function POST(request: Request) {
     );
 
     return {
-      product_id: item.product_id,
-      quantity,
-      unit_price: unitPrice,
-      discount,
-      line_total: lineTotal,
-      product,
-    };
+  product_id: item.product_id,
+  quantity,
+  unit_price: unitPrice,
+  unit_cost: unitCost,
+  discount,
+  line_total: lineTotal,
+  product,
+};
   });
 
   try {
@@ -228,6 +230,7 @@ export async function POST(request: Request) {
         product_id: string;
         quantity: number;
         unit_price: number;
+        unit_cost: number;
         discount: number;
         line_total: number;
         product: (typeof normalizedItems)[number]["product"];
@@ -337,14 +340,15 @@ export async function POST(request: Request) {
     }
 
     const saleItems = finalItems.map((item) => ({
-      business_id: businessId,
-      sale_id: sale.id,
-      product_id: item.product_id,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      discount: item.discount,
-      line_total: item.line_total,
-    }));
+  business_id: businessId,
+  sale_id: sale.id,
+  product_id: item.product_id,
+  quantity: item.quantity,
+  unit_price: item.unit_price,
+  unit_cost: item.unit_cost,
+  discount: item.discount,
+  line_total: item.line_total,
+}));
 
     const { error: saleItemsError } = await supabase
       .from("sale_items")
