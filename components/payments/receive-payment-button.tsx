@@ -27,7 +27,24 @@ export default function ReceivePaymentButton({
   const [loading, setLoading] = useState(false);
 
   async function submitPayment() {
-    setLoading(true);
+
+  const paymentAmount = Number(amount);
+
+  if (!paymentAmount || paymentAmount <= 0) {
+    alert("Enter a valid payment amount");
+    return;
+  }
+
+
+  if (paymentAmount > balanceDue) {
+    alert(
+      "Payment amount cannot exceed outstanding balance."
+    );
+    return;
+  }
+
+
+  setLoading(true);
 
     const response = await fetch("/api/payments", {
       method: "POST",
@@ -46,12 +63,13 @@ export default function ReceivePaymentButton({
 
     setLoading(false);
 
-    if (response.ok) {
-      window.location.reload();
-    } else {
-      const data = await response.json();
-      alert(data.error || "Payment failed");
-    }
+   if (response.ok) {
+  alert("Payment recorded successfully");
+  window.location.reload();
+} else {
+  const data = await response.json();
+  alert(data.error || "Payment failed");
+}
   }
 
   return (
