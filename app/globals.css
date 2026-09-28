@@ -54,3 +54,64 @@ button, input, select, textarea { font: inherit; }
     margin: 20mm;
   }
 }
+
+@media print {
+
+  @page {
+    margin: 10mm;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  #customer-statement {
+    width: 100%;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .statement-section {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .space-y-8 {
+    gap: 8px !important;
+  }
+
+  .space-y-3 {
+    gap: 4px !important;
+  }
+
+  .rounded-2xl {
+    border-radius: 0;
+  }
+
+  .p-5 {
+    padding: 12px !important;
+  }
+
+}
+@media print {
+  .space-y-8 {
+    gap: 12px !important;
+  }
+
+  .space-y-3 {
+    gap: 6px !important;
+  }
+}
+@media print {
+  .space-y-8 {
+    gap: 12px !important;
+  }
+
+  .space-y-3 {
+    gap: 6px !important;
+  }
+}

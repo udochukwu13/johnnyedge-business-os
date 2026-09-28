@@ -10,30 +10,52 @@ export default function DownloadStatementPdfButton() {
     if (!element) return;
 
     const canvas = await html2canvas(element, {
-  scale: 2,
-  useCORS: true,
-  backgroundColor: "#ffffff",
-  onclone: (clonedDocument) => {
-    const allElements = clonedDocument.querySelectorAll("*");
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
 
-    allElements.forEach((el) => {
-      const element = el as HTMLElement;
+      onclone: (clonedDocument) => {
+        // Remove buttons and other elements marked no-print
+        const noPrintElements =
+          clonedDocument.querySelectorAll(".no-print");
 
-      element.style.color = "#000000";
-      element.style.backgroundColor = "#ffffff";
-      element.style.borderColor = "#dddddd";
+        noPrintElements.forEach((element) => {
+          element.remove();
+        });
+
+
+        // Clean colours for PDF output
+        const allElements =
+          clonedDocument.querySelectorAll("*");
+
+        allElements.forEach((el) => {
+          const element = el as HTMLElement;
+
+          element.style.color = "#000000";
+          element.style.backgroundColor = "#ffffff";
+          element.style.borderColor = "#dddddd";
+        });
+      },
     });
-  },
-});
+
 
     const imageData = canvas.toDataURL("image/png");
 
-    const pdf = new jsPDF("p", "mm", "a4");
 
-    const width = pdf.internal.pageSize.getWidth();
+    const pdf = new jsPDF(
+      "p",
+      "mm",
+      "a4"
+    );
+
+
+    const width =
+      pdf.internal.pageSize.getWidth();
+
 
     const height =
       (canvas.height * width) / canvas.width;
+
 
     pdf.addImage(
       imageData,
@@ -44,8 +66,12 @@ export default function DownloadStatementPdfButton() {
       height
     );
 
-    pdf.save("customer-statement.pdf");
+
+    pdf.save(
+      "customer-statement.pdf"
+    );
   }
+
 
   return (
     <button

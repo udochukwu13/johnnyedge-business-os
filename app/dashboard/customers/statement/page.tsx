@@ -56,36 +56,36 @@ export default async function CustomerStatementPage({
 
 
   const { data: sales } = await supabase
-    .from("sales")
-    .select(
-      `
-      id,
-      sale_number,
-      total,
-      amount_paid,
-      balance_due,
-      sold_at
-      `
-    )
-    .eq("customer_id", customerId)
-    .order("sold_at", { ascending: false });
-
+  .from("sales")
+  .select(
+    `
+    id,
+    sale_number,
+    total,
+    amount_paid,
+    balance_due,
+    sold_at
+    `
+  )
+  .eq("customer_id", customerId)
+  .eq("business_id", activeBusiness.business.id)
+  .order("sold_at", { ascending: false });
 
   const { data: payments } = await supabase
-    .from("payments")
-    .select(
-      `
-      id,
-      amount,
-      payment_method,
-      reference,
-      notes,
-      created_at
-      `
-    )
-    .eq("customer_id", customerId)
-    .order("created_at", { ascending: false });
-
+  .from("payments")
+  .select(
+    `
+    id,
+    amount,
+    payment_method,
+    reference,
+    notes,
+    created_at
+    `
+  )
+  .eq("customer_id", customerId)
+  .eq("business_id", activeBusiness.business.id)
+  .order("created_at", { ascending: false });
 
   const totalSales = (sales || []).reduce(
     (sum, sale) => sum + Number(sale.total || 0),
@@ -157,7 +157,8 @@ const accountStatus =
 
   </div>
 
-  <div className="flex flex-wrap gap-3">
+   
+    <div className="no-print flex flex-wrap gap-3">
   <PrintStatementButton />
 
   <DownloadStatementPdfButton />
@@ -166,9 +167,9 @@ const accountStatus =
 </div>
 
         
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="statement-section grid gap-4 md:grid-cols-3">
 
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
+  <div className="rounded-2xl border bg-white p-5 shadow-sm">
           <div className="text-sm text-slate-500">
             Total Purchases
           </div>
@@ -204,13 +205,13 @@ const accountStatus =
 
 
 
-      <div className="rounded-2xl border bg-white shadow-sm">
+      <div className="statement-section rounded-2xl border bg-white shadow-sm">
 
-        <div className="border-b p-5">
-          <h2 className="font-semibold">
-            Sales History
-          </h2>
-        </div>
+  <div className="border-b p-5">
+    <h2 className="font-semibold">
+      Sales History
+    </h2>
+  </div>
 
 
         {(sales || []).map((sale) => (
@@ -253,44 +254,45 @@ const accountStatus =
 
 
 
-      <div className="rounded-2xl border bg-white shadow-sm">
+      {(payments || []).length > 0 && (
+  <div className="statement-section rounded-2xl border bg-white shadow-sm">
 
-        <div className="border-b p-5">
-          <h2 className="font-semibold">
-            Payment History
-          </h2>
-        </div>
-
-
-        {(payments || []).map((payment) => (
-          <div
-            key={payment.id}
-            className="flex justify-between border-b p-5"
-          >
-
-            <div>
-
-              <div className="font-semibold">
-                {payment.payment_method}
-              </div>
-
-              <div className="text-sm text-slate-500">
-                {payment.reference}
-              </div>
-
-            </div>
+    <div className="border-b p-5">
+      <h2 className="font-semibold">
+        Payment History
+      </h2>
+    </div>
 
 
-            <div className="font-semibold text-emerald-600">
-              ₦{Number(payment.amount).toLocaleString()}
-            </div>
+    {(payments || []).map((payment) => (
+  <div
+    key={payment.id}
+    className="flex justify-between border-b p-5"
+  >
 
-          </div>
-        ))}
+    <div>
 
+      <div className="font-semibold">
+        {payment.payment_method}
       </div>
 
+      <div className="text-sm text-slate-500">
+        {payment.reference}
+      </div>
 
     </div>
-  );
+
+
+   <div className="font-semibold text-emerald-600">
+      ₦{Number(payment.amount).toLocaleString()}
+    </div>
+
+  </div>
+))}
+
+  </div>
+
+)}
+  </div>
+);
 }
