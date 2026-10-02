@@ -114,5 +114,208 @@ ${alertsText}
 `.trim();
 }
 
-// Backwards compatibility alias for components referencing buildAIBusinessPrompt
-export const buildAIBusinessPrompt = buildDashboardAIInsightPrompt;
+export function buildAIBusinessPrompt(
+  context: any,
+  userMessage = "Provide an executive briefing based on the verified business data.",
+  conversationHistory: Array<{
+    role: "user" | "assistant";
+    content: string;
+  }> = []
+) {
+  const currency = context?.business?.currency || "NGN";
+
+  const formatNumber = (value: unknown) => {
+    const number = Number(value || 0);
+
+    return Number.isFinite(number)
+      ? number.toLocaleString("en-NG", {
+          maximumFractionDigits: 2,
+        })
+      : "0";
+  };
+
+  const historyText =
+    conversationHistory.length > 0
+      ? conversationHistory
+          .map(
+            (message) =>
+              `${message.role === "user" ? "USER" : "ASSISTANT"}: ${
+                message.content
+              }`
+          )
+          .join("\n")
+      : "No previous conversation.";
+
+  const summaryText = Object.entries(context?.summary || {})
+    .map(([key, value]) => `- ${key}: ${formatNumber(value)}`)
+    .join("\n");
+
+  const customersText =
+    context?.customers?.length > 0
+      ? context.customers.map((item: any) => JSON.stringify(item)).join("\n")
+      : "No customer records.";
+
+  const productsText =
+    context?.products?.length > 0
+      ? context.products.map((item: any) => JSON.stringify(item)).join("\n")
+      : "No product records.";
+
+  const lowStockText =
+    context?.low_stock_products?.length > 0
+      ? context.low_stock_products
+          .map((item: any) => JSON.stringify(item))
+          .join("\n")
+      : "No low-stock products.";
+
+  const productSalesText =
+    context?.product_sales_summary?.length > 0
+      ? context.product_sales_summary
+          .map((item: any) => JSON.stringify(item))
+          .join("\n")
+      : "No product sales summary.";
+
+  const profitabilityText =
+    context?.product_profitability_summary?.length > 0
+      ? context.product_profitability_summary
+          .map((item: any) => JSON.stringify(item))
+          .join("\n")
+      : "No product profitability data.";
+
+  const salesText =
+    context?.sales?.length > 0
+      ? context.sales.map((item: any) => JSON.stringify(item)).join("\n")
+      : "No sales records.";
+
+  const saleItemsText =
+    context?.sale_items?.length > 0
+      ? context.sale_items
+          .map((item: any) => JSON.stringify(item))
+          .join("\n")
+      : "No sale-item records.";
+
+  const ordersText =
+    context?.orders?.length > 0
+      ? context.orders.map((item: any) => JSON.stringify(item)).join("\n")
+      : "No order records.";
+
+  const invoicesText =
+    context?.invoices?.length > 0
+      ? context.invoices.map((item: any) => JSON.stringify(item)).join("\n")
+      : "No invoice records.";
+
+  const expensesText =
+    context?.expenses?.length > 0
+      ? context.expenses.map((item: any) => JSON.stringify(item)).join("\n")
+      : "No expense records.";
+
+  const cashflowText =
+    context?.cashflow?.length > 0
+      ? context.cashflow.map((item: any) => JSON.stringify(item)).join("\n")
+      : "No cashflow records.";
+
+  return `
+You are the AI Business Assistant inside JohnnyEdge AI Business OS.
+
+You help the business owner understand and manage the business using the verified live business data supplied below.
+
+BUSINESS
+- Name: ${context?.business?.name || "Business"}
+- Industry: ${context?.business?.industry || "Not specified"}
+- Country: ${context?.business?.country || "Not specified"}
+- Currency: ${currency}
+
+CORE RULES
+
+1. Use the supplied business data as the source of truth for business-specific facts.
+2. Never invent sales, expenses, customers, products, stock, orders, invoices, cashflow, payments, or profitability figures.
+3. If the supplied data cannot answer a question, say so clearly.
+4. Distinguish between sales/revenue, cash received, receivables, invoice balances, expenses, inventory value, gross profit, and cashflow.
+5. Never treat outstanding receivables as cash received.
+6. When calculating a figure, show the calculation briefly when useful.
+7. Use the business currency for monetary amounts.
+8. Do not expose internal database IDs unless specifically requested.
+9. Use previous conversation messages when answering follow-up questions.
+10. Do not claim that an action was performed unless the system actually performed it.
+11. For analytical questions, distinguish verified facts from analysis and suggested actions.
+12. Do not invent missing dates, trends, or comparisons.
+
+BUSINESS SUMMARY
+
+${summaryText}
+
+CUSTOMERS
+
+${customersText}
+
+PRODUCTS
+
+${productsText}
+
+LOW-STOCK PRODUCTS
+
+${lowStockText}
+
+PRODUCT SALES SUMMARY
+
+${productSalesText}
+
+PRODUCT PROFITABILITY
+
+${profitabilityText}
+
+SALES
+
+${salesText}
+
+SALE ITEMS
+
+${saleItemsText}
+
+ORDERS
+
+${ordersText}
+
+INVOICES
+
+${invoicesText}
+
+EXPENSES
+
+${expensesText}
+
+CASHFLOW
+
+${cashflowText}
+
+CONVERSATION HISTORY
+
+${historyText}
+
+CURRENT USER QUESTION
+
+${userMessage}
+
+RESPONSE GUIDELINES
+
+Answer the current question directly first.
+
+For simple factual questions, be concise.
+
+For analytical questions:
+- state the relevant figures,
+- explain the calculation or comparison,
+- provide a practical interpretation.
+
+For management questions, use these sections when appropriate:
+
+## Verified Facts
+
+## Analysis
+
+## Possible Actions
+
+Do not dump raw database records unless the user asks for them.
+
+Remember: the supplied live business context is the authoritative source for business-specific information.
+`.trim();
+}
