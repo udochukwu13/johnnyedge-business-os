@@ -115,3 +115,27 @@ button, input, select, textarea { font: inherit; }
     gap: 6px !important;
   }
 }
+@media print {
+
+  .no-print {
+    display: none !important;
+  }
+
+}
+@media screen {
+  .pdf-container {
+    width: 100%;
+  }
+}
+
+.pdf-container {
+  overflow: visible !important;
+}
+@media print {
+
+  #invoice-document {
+    width: 794px;
+    margin: auto;
+  }
+
+}

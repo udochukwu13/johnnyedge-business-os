@@ -3,17 +3,19 @@
 import { useState } from "react";
 
 type ReceivePaymentButtonProps = {
-  saleId: string;
+  saleId?: string | null;
+  invoiceId?: string | null;
   customerId: string | null;
-  saleNumber: string;
+  referenceNumber: string;
   balanceDue: number;
   currency: string;
 };
 
 export default function ReceivePaymentButton({
   saleId,
+  invoiceId,
   customerId,
-  saleNumber,
+  referenceNumber,
   balanceDue,
   currency,
 }: ReceivePaymentButtonProps) {
@@ -52,9 +54,10 @@ export default function ReceivePaymentButton({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        sale_id: saleId,
-        customer_id: customerId,
-        amount,
+  sale_id: saleId || null,
+  invoice_id: invoiceId || null,
+  customer_id: customerId,
+  amount,
         payment_method: paymentMethod,
         reference,
         notes,
@@ -89,7 +92,7 @@ export default function ReceivePaymentButton({
           </div>
 
           <div className="mt-1 text-sm text-slate-500">
-            {saleNumber}
+            {referenceNumber}
           </div>
 
           <div className="mt-3 text-sm text-slate-500">

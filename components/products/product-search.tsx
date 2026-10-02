@@ -1,5 +1,5 @@
 "use client";
-
+import QRCodeGenerator from "@/components/qr/qr-code-generator";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import EditProductButton from "@/components/products/edit-product-button";
@@ -129,7 +129,13 @@ const profitMargin =
             </span>
           </div>
 
-
+          <div className="flex justify-end pt-2">
+            <QRCodeGenerator
+  value={`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/products/qr/${product.id}`}
+  label="Product QR"
+  fileName={`product-${product.sku || product.id}`}
+/>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
 
             <div>

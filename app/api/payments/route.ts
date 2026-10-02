@@ -20,19 +20,20 @@ export async function POST(request: Request) {
 const {
   customer_id,
   sale_id,
+  invoice_id,
   amount,
   payment_method,
   reference,
   notes,
 } = body;
 
-if (!sale_id) {
+
+if (!sale_id && !invoice_id) {
   return NextResponse.json(
-    { error: "Sale is required" },
+    { error: "Sale or invoice is required" },
     { status: 400 }
   );
 }
-
 if (!amount || Number(amount) <= 0) {
   return NextResponse.json(
     { error: "Valid payment amount is required" },
@@ -42,10 +43,11 @@ if (!amount || Number(amount) <= 0) {
 const { data: payment, error: paymentError } = await supabase
   .from("payments")
   .insert({
-    business_id: activeBusiness.business.id,
-    customer_id: customer_id || null,
-    sale_id,
-    amount: Number(amount),
+  business_id: activeBusiness.business.id,
+  customer_id: customer_id || null,
+  sale_id: sale_id || null,
+  invoice_id: invoice_id || null,
+  amount: Number(amount),
     payment_method: payment_method || "cash",
     reference: reference || null,
     notes: notes || null,
@@ -59,43 +61,148 @@ if (paymentError) {
     { status: 400 }
   );
 }
-const { data: sale, error: saleError } = await supabase
-  .from("sales")
-  .select(
-    "id, total, amount_paid, balance_due, customer_id"
-  )
-  .eq("id", sale_id)
-  .eq("business_id", activeBusiness.business.id)
-  .single();
+// Update invoice if payment belongs to invoice
+if (invoice_id) {
+  const { data: invoice, error: invoiceError } = await supabase
+    .from("invoices")
+    .select(
+      "id, total, amount_paid, balance_due"
+    )
+    .eq("id", invoice_id)
+    .eq("business_id", activeBusiness.business.id)
+    .single();
 
-if (saleError || !sale) {
-  return NextResponse.json(
-    { error: "Sale not found" },
-    { status: 404 }
+
+  if (invoiceError || !invoice) {
+    return NextResponse.json(
+      { error: "Invoice not found" },
+      { status: 404 }
+    );
+  }
+
+
+  const newAmountPaid =
+    Number(invoice.amount_paid || 0) + Number(amount);
+
+
+  const newBalanceDue = Math.max(
+    0,
+    Number(invoice.total || 0) - newAmountPaid
   );
+
+
+  const { error: updateInvoiceError } =
+    await supabase
+      .from("invoices")
+      .update({
+        amount_paid: newAmountPaid,
+        balance_due: newBalanceDue,
+        status:
+          newBalanceDue === 0
+            ? "paid"
+            : "partial",
+      })
+      .eq("id", invoice_id)
+      .eq(
+        "business_id",
+        activeBusiness.business.id
+      );
+
+
+  if (updateInvoiceError) {
+    return NextResponse.json(
+      { error: updateInvoiceError.message },
+      { status: 400 }
+    );
+  }
 }
-const newAmountPaid =
-  Number(sale.amount_paid || 0) + Number(amount);
+if (sale_id) {
 
-const newBalanceDue = Math.max(
-  0,
-  Number(sale.total || 0) - newAmountPaid
-);
-const { error: updateSaleError } = await supabase
-  .from("sales")
-  .update({
-    amount_paid: newAmountPaid,
-    balance_due: newBalanceDue,
-    status: newBalanceDue === 0 ? "paid" : "partial",
-  })
-  .eq("id", sale_id)
-  .eq("business_id", activeBusiness.business.id);
+  const { data: sale, error: saleError } = await supabase
+    .from("sales")
+    .select(
+      "id, total, amount_paid, balance_due, customer_id"
+    )
+    .eq("id", sale_id)
+    .eq("business_id", activeBusiness.business.id)
+    .single();
 
-if (updateSaleError) {
-  return NextResponse.json(
-    { error: updateSaleError.message },
-    { status: 400 }
+
+  if (saleError || !sale) {
+    return NextResponse.json(
+      { error: "Sale not found" },
+      { status: 404 }
+    );
+  }
+
+
+  const newAmountPaid =
+    Number(sale.amount_paid || 0) + Number(amount);
+
+
+  const newBalanceDue = Math.max(
+    0,
+    Number(sale.total || 0) - newAmountPaid
   );
+
+
+  const { error: updateSaleError } =
+    await supabase
+      .from("sales")
+      .update({
+        amount_paid: newAmountPaid,
+        balance_due: newBalanceDue,
+        status:
+          newBalanceDue === 0
+            ? "paid"
+            : "partial",
+      })
+      .eq("id", sale_id)
+      .eq(
+        "business_id",
+        activeBusiness.business.id
+      );
+
+
+  if (updateSaleError) {
+    return NextResponse.json(
+      { error: updateSaleError.message },
+      { status: 400 }
+    );
+  }
+
+}
+if (sale_id) {
+  const newAmountPaid =
+    Number(sale.amount_paid || 0) + Number(amount);
+
+  const newBalanceDue = Math.max(
+    0,
+    Number(sale.total || 0) - newAmountPaid
+  );
+
+  const { error: updateSaleError } = await supabase
+    .from("sales")
+    .update({
+      amount_paid: newAmountPaid,
+      balance_due: newBalanceDue,
+      status:
+        newBalanceDue === 0
+          ? "paid"
+          : "partial",
+    })
+    .eq("id", sale_id)
+    .eq(
+      "business_id",
+      activeBusiness.business.id
+    );
+
+  if (updateSaleError) {
+    return NextResponse.json(
+      { error: updateSaleError.message },
+      { status: 400 }
+    );
+  }
 }
 const { data: customer, error: customerError } = await supabase
   .from("customers")
