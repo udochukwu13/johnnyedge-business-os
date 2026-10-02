@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getActiveBusiness } from "@/lib/business";
 import { Package } from "lucide-react";
+import QRCodeGenerator from "@/components/qr/qr-code-generator";
 import InventoryMovementForm from "@/components/inventory/inventory-movement-form";
 import InventoryMovementHistory from "@/components/inventory/inventory-movement-history";
 
@@ -207,7 +208,13 @@ export default async function InventoryPage() {
                       {product.sku || "No SKU"}
                     </p>
                   </div>
-
+<div className="shrink-0">
+  <QRCodeGenerator
+  value={`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard/inventory/qr/${product.id}`}
+  label="Inventory QR"
+  fileName={`inventory-${product.sku || product.id}`}
+/>
+</div>
                   <div className="flex flex-wrap items-center gap-6">
                     <div>
                       <div className="text-xs font-medium uppercase tracking-wide text-slate-400">

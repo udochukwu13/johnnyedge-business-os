@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import QRCodeGenerator from "@/components/qr/qr-code-generator";
 
 type Customer = {
   id: string;
@@ -458,6 +459,9 @@ export default function InvoicesPageClient({
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Status
                   </th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+  QR
+</th>
                   <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Actions
                   </th>
@@ -550,7 +554,13 @@ export default function InvoicesPageClient({
                           )}
                         </select>
                       </td>
-
+<td className="px-5 py-4">
+  <QRCodeGenerator
+    value={`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard/invoices/qr/${invoice.id}`}
+    label="Invoice QR"
+    fileName={`invoice-${invoice.invoice_number}`}
+  />
+</td>
                       <td className="px-5 py-4 text-right">
                         <div className="flex justify-end gap-2">
                           <Link

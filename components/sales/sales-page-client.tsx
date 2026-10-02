@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import NewSaleForm from "@/components/sales/new-sale-form";
-
+import QRCodeGenerator from "@/components/qr/qr-code-generator";
 type Customer = {
   id: string;
   name: string;
@@ -212,6 +212,9 @@ export default function SalesPageClient({
                   <th className="px-6 py-3 font-semibold text-slate-600">
                     Status
                   </th>
+                  <th className="px-6 py-3 font-semibold text-slate-600">
+  QR
+</th>
                 </tr>
               </thead>
 
@@ -259,6 +262,13 @@ export default function SalesPageClient({
                         {sale.status}
                       </span>
                     </td>
+                    <td className="px-6 py-4">
+  <QRCodeGenerator
+    value={`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard/sales/qr/${sale.id}`}
+    label="Sale QR"
+    fileName={`sale-${sale.sale_number}`}
+  />
+</td>
                   </tr>
                 ))}
               </tbody>

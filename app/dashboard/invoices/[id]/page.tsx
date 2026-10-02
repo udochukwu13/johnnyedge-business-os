@@ -34,9 +34,8 @@ const currency =
       balance_due,
       issue_date,
       due_date,
-      notes,
       created_at,
-      customer:customers (
+customer:customers (
         id,
         name,
         email,
@@ -54,21 +53,40 @@ const currency =
           name,
           sku
         )
-      )
+      ),
+        payments (
+  id,
+  amount,
+  payment_method,
+  reference,
+  notes,
+  created_at
+)
     `)
     .eq("id", id)
     .eq("business_id", activeBusiness.business.id)
     .maybeSingle();
-  if (error || !invoice) {
-    notFound();
-  }
+  if (error) {
+  throw new Error(
+    `Invoice query failed: ${error.message}`
+  );
+}
+
+if (!invoice) {
+  notFound();
+}
   const customer = Array.isArray(invoice.customer)
     ? invoice.customer[0]
     : invoice.customer;
   const items = Array.isArray(invoice.items)
-    ? invoice.items
-    : [];
-  const formatCurrency = (value: number | string | null) =>
+  ? invoice.items
+  : [];
+
+const payments = Array.isArray(invoice.payments)
+  ? invoice.payments
+  : [];
+
+const formatCurrency = (value: number | string | null) =>
     new Intl.NumberFormat("en-NG", {
       style: "currency",
       currency: activeBusiness.business.currency || "NGN",
@@ -280,6 +298,61 @@ const currency =
   </div>
 )}
             </div>
+            <section className="no-print rounded-2xl border border-slate-200 bg-white p-6">
+  <h2 className="text-lg font-semibold text-slate-950">
+    Payment History
+  </h2>
+
+  <p className="mt-1 text-sm text-slate-500">
+    Individual payments recorded against this invoice.
+  </p>
+
+  {payments.length > 0 ? (
+    <div className="mt-4 divide-y divide-slate-100">
+      {payments.map((payment) => (
+        <div
+          key={payment.id}
+          className="py-4 first:pt-0 last:pb-0"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="font-semibold capitalize text-slate-950">
+                {String(payment.payment_method || "cash").replace(
+                  "_",
+                  " "
+                )}
+              </div>
+
+              {payment.reference && (
+                <div className="mt-1 text-sm text-slate-500">
+                  Reference: {payment.reference}
+                </div>
+              )}
+
+              {payment.notes && (
+                <div className="mt-1 text-sm text-slate-500">
+                  {payment.notes}
+                </div>
+              )}
+
+              <div className="mt-1 text-xs text-slate-400">
+                {new Date(payment.created_at).toLocaleString()}
+              </div>
+            </div>
+
+            <div className="text-lg font-bold text-emerald-700">
+              {formatCurrency(payment.amount)}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-5 text-center text-sm text-slate-500">
+      No payments recorded yet.
+    </div>
+  )}
+</section>
           </section>
           <section className="no-print rounded-2xl border border-slate-200 bg-white p-6">
             <h2 className="text-lg font-semibold text-slate-950">

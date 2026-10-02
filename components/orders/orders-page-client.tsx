@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import NewOrderForm from "@/components/orders/new-order-form";
+import QRCodeGenerator from "@/components/qr/qr-code-generator";
 
 type Customer = {
   id: string;
@@ -348,6 +349,7 @@ export default function OrdersPageClient({
                   <th className="px-5 py-3">Date</th>
                   <th className="px-5 py-3">Total</th>
                   <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3">QR</th>
                 </tr>
               </thead>
 
@@ -392,6 +394,13 @@ export default function OrdersPageClient({
                         ))}
                       </select>
                     </td>
+                    <td className="px-5 py-4">
+  <QRCodeGenerator
+    value={`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard/orders/qr/${order.id}`}
+    label="Order QR"
+    fileName={`order-${order.order_number}`}
+  />
+</td>
                   </tr>
                 ))}
               </tbody>
